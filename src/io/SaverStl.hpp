@@ -38,6 +38,8 @@
 #define _SAVER_STL_HPP_
 
 #include "Saver.hpp"
+#include "core/Faces.hpp"
+
 
 class SaverStl : public Saver {
 
@@ -54,6 +56,8 @@ public:
   const char* ext() const { return _ext; }
   
 private:
+
+  void saveFace_(FILE* fp, vector<float>& normals, vector<float>& vertexs, Faces faces,const int iF) const;
 
 };
 

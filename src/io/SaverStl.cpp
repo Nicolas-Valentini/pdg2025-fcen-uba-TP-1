@@ -35,15 +35,34 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "SaverStl.hpp"
-
+#include "wrl/IndexedFaceSet.hpp"
 #include "wrl/Shape.hpp"
 #include "wrl/Appearance.hpp"
 #include "wrl/Material.hpp"
-#include "wrl/IndexedFaceSet.hpp"
+#include <filesystem>
 
-#include "core/Faces.hpp"
+
 
 const char* SaverStl::_ext = "stl";
+
+void SaverStl::saveFace_(FILE* fp,vector<float>& normals, vector<float>& vertexs, Faces faces,const int iF) const {
+    fprintf(fp, "facet normal ");
+    for (int i = 0; i < 3; ++i) {
+        fprintf(fp,"%f ",vertexs[iF*3+i]);
+    }
+    fprintf(fp,"\n  outer loop\n");
+    for (int i = 0; i < faces.getFaceSize(iF); ++i) {
+        fprintf(fp,"    vertex ");
+        int corner = faces.getFaceVertex(iF,i);
+        for (int j = 0; j < 3; ++j) {
+            fprintf(fp,"%f ",vertexs[corner*3+j]);
+        }
+        fprintf(fp,"\n");
+    }
+    fprintf(fp,"  endloop\n");
+    fprintf(fp,"endfacet\n");
+}
+
 
 //////////////////////////////////////////////////////////////////////
 bool SaverStl::save(const char* filename, SceneGraph& wrl) const {
@@ -65,26 +84,42 @@ bool SaverStl::save(const char* filename, SceneGraph& wrl) const {
 
     // if (all the conditions are satisfied) {
 
-    FILE* fp = fopen(filename,"w");
-    if(	fp!=(FILE*)0) {
+    int nChildren = wrl.getNumberOfChildren();
+    if(nChildren == 1){
+        Node* node = wrl[0];
+        if(node->isShape()){
+            Shape* shape = (Shape*)node;
+            Node* geometry = shape->getGeometry();
+            if(geometry->isIndexedFaceSet()){
+                IndexedFaceSet* indexedFaceSet = (IndexedFaceSet*)geometry;
+                if(indexedFaceSet->isTriangleMesh()){
+                    FILE* fp = fopen(filename,"w");
+                    if(	fp!=(FILE*)0) {
+                        // if set, use ifs->getName()
+                        // otherwise use filename,
+                        // but first remove directory and extension
+                        string name = indexedFaceSet->getName();
+                        if(name.empty()){
+                            filesystem::path filePath = filesystem::path(filename);
+                            name = filePath.stem().string();
+                        }
+                        fprintf(fp,"solid %s\n",name.c_str());
+                        Faces faces = Faces(indexedFaceSet->getNumberOfCorners(),indexedFaceSet->getCoordIndex());
+                        vector<float> normals = indexedFaceSet->getNormal();
+                        vector<float> vertexs = indexedFaceSet->getCoord();
+                        for (int iF = 0; iF < faces.getNumberOfFaces(); ++iF) {
+                            saveFace_(fp,normals,vertexs, faces, iF);
 
-      // if set, use ifs->getName()
-      // otherwise use filename,
-      // but first remove directory and extension
+                        }
+                        fclose(fp);
+                        success = true;
+                    }
 
-      fprintf(fp,"solid %s\n",filename);
-
-      // TODO ...
-      // for each face {
-      //   ...
-      // }
-      
-      fclose(fp);
-      success = true;
+                }
+            }
+        }
     }
-
     // } endif (all the conditions are satisfied)
-
   }
   return success;
 }

@@ -89,7 +89,14 @@ public:
 
 private:
 
-  // TODO
+  vector<int> m_CoordIndex;
+  vector<int> m_FacesIndex;
+  int m_nVerts;
+
+  void createInvalidFaces_();
+  bool outOfRangeFace_(const int iF) const;
+  bool invalidCorner_(const int iC) const;
+
 
 };
 
