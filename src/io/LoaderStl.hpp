@@ -39,6 +39,7 @@
 
 #include "Loader.hpp"
 #include "Tokenizer.hpp"
+#include "TokenizerFile.hpp"
 
 #include "wrl/Node.hpp"
 
@@ -47,6 +48,7 @@ class LoaderStl : public Loader {
 private:
 
   const static char* _ext;
+  void loadFace_(TokenizerFile& tkn, vector<float>& normal, vector<float>& coord,vector<int>& coordIndex, int& indexV);
 
 public:
 

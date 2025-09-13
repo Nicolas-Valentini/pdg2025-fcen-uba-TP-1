@@ -35,7 +35,6 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdio.h>
-#include "TokenizerFile.hpp"
 #include "LoaderStl.hpp"
 #include "StrException.hpp"
 
@@ -48,6 +47,44 @@
 // https://en.wikipedia.org/wiki/STL_(file_format)
 
 const char* LoaderStl::_ext = "stl";
+
+void LoaderStl::loadFace_(TokenizerFile& tkn, vector<float>& normal, vector<float>& coord,vector<int>& coordIndex, int& indexV){
+    if(tkn.equals("facet")==false)
+        throw new StrException("expecting facet");
+    if(tkn.expecting("normal")==false)
+        throw new StrException("expecting normal");
+    for (int i = 0; i < 3; ++i) {
+        float n;
+        if(!tkn.getFloat(n))
+            throw new StrException("expecting normal float");
+        normal.push_back(n);
+    }
+    if(tkn.expecting("outer")==false)
+        throw new StrException("expecting outer");
+    if(tkn.expecting("loop")==false)
+        throw new StrException("expecting loop");
+    while(true){
+        tkn.get();
+        if(tkn.equals("endloop")){
+            coordIndex.push_back(-1);
+            break;
+        }
+        if(!tkn.equals("vertex"))
+            throw new StrException("expecting vertex");
+        else{
+            for (int i = 0; i < 3; ++i) {
+                float v;
+                if(!tkn.getFloat(v))
+                    throw new StrException("expecting vector float");
+                coord.push_back(v);
+            }
+            coordIndex.push_back(indexV);
+            indexV++;
+        }
+    }
+    if(tkn.expecting("endfacet")==false)
+        throw new StrException("expecting loop");
+}
 
 bool LoaderStl::load(const char* filename, SceneGraph& wrl) {
   bool success = false;
@@ -71,18 +108,34 @@ bool LoaderStl::load(const char* filename, SceneGraph& wrl) {
     if(tkn.expecting("solid") && tkn.get()) {
       string stlName = tkn; // second token should be the solid name
 
-      // TODO ...
-
       // create the scene graph structure :
       // 1) the SceneGraph should have a single Shape node a child
       // 2) the Shape node should have an Appearance node in its appearance field
       // 3) the Appearance node should have a Material node in its material field
       // 4) the Shape node should have an IndexedFaceSet node in its geometry node
-
       // from the IndexedFaceSet
       // 5) get references to the coordIndex, coord, and normal arrays
-      // 6) set the normalPerVertex variable to false (i.e., normals per face)  
+      // 6) set the normalPerVertex variable to false (i.e., normals per face)
 
+      Shape* shape = new Shape();
+      shape->setName(stlName);
+      wrl.addChild(shape);
+      Appearance* appearance = new Appearance();
+      appearance->setName(stlName);
+      shape->setAppearance(appearance);
+      Material* material = new Material();
+      material->setName(stlName);
+      appearance->setMaterial(material);
+      IndexedFaceSet* indexedFaceSet = new IndexedFaceSet();
+      shape->setGeometry(indexedFaceSet);
+      vector<int>& coordIndex = indexedFaceSet->getCoordIndex();
+      vector<float>& coord = indexedFaceSet->getCoord();
+      vector<float>& normal = indexedFaceSet->getNormal();
+      indexedFaceSet->setNormalPerVertex(false);
+      int indexV = 0;
+      while(tkn.get()){
+          loadFace_(tkn,normal,coord,coordIndex,indexV);
+      }
       // the file should contain a list of triangles in the following format
 
       // facet normal ni nj nk
@@ -105,6 +158,7 @@ bool LoaderStl::load(const char* filename, SceneGraph& wrl) {
 
     // close the file (this statement may not be reached)
     fclose(fp);
+    success=true;
     
   } catch(StrException* e) { 
     
