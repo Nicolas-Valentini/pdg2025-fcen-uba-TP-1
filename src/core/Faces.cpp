@@ -38,6 +38,7 @@
 #include "Faces.hpp"
 
 void Faces::createInvalidFaces_(){
+    //If the coordIndex in the constructor is invalid, Faces shouldnt work
     m_CoordIndex = vector<int>();
     m_FacesIndex = vector<int>();
     m_nVerts = 0;
@@ -53,12 +54,14 @@ Faces::Faces(const int nV, const vector<int>& coordIndex) {
         }
         else{
             if(currentCorner == -1){
+                //Its impossible to have a face with less than 2 vertex
                 if( currentFaceSize < 2){
                     createInvalidFaces_();
                     break;
                 }
                 else{
                     m_CoordIndex.push_back(-1);
+                    //m_FacesIndex has the index of the end of the face i
                     m_FacesIndex.push_back(i);
                     currentFaceSize = 0;
                 }

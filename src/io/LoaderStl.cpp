@@ -53,6 +53,7 @@ void LoaderStl::loadFace_(TokenizerFile& tkn, vector<float>& normal, vector<floa
         throw new StrException("expecting facet");
     if(tkn.expecting("normal")==false)
         throw new StrException("expecting normal");
+    //Load x y z of the normal of the face
     for (int i = 0; i < 3; ++i) {
         float n;
         if(!tkn.getFloat(n))
@@ -72,6 +73,7 @@ void LoaderStl::loadFace_(TokenizerFile& tkn, vector<float>& normal, vector<floa
         if(!tkn.equals("vertex"))
             throw new StrException("expecting vertex");
         else{
+            //Load x y z of the vertex
             for (int i = 0; i < 3; ++i) {
                 float v;
                 if(!tkn.getFloat(v))

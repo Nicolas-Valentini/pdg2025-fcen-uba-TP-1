@@ -47,13 +47,15 @@ const char* SaverStl::_ext = "stl";
 
 void SaverStl::saveFace_(FILE* fp,vector<float>& normals, vector<float>& vertexs, Faces faces,const int iF) const {
     fprintf(fp, "facet normal ");
+    //3 coordinates x y z for normal
     for (int i = 0; i < 3; ++i) {
-        fprintf(fp,"%f ",vertexs[iF*3+i]);
+        fprintf(fp,"%f ",normals[iF*3+i]);
     }
     fprintf(fp,"\n  outer loop\n");
     for (int i = 0; i < faces.getFaceSize(iF); ++i) {
         fprintf(fp,"    vertex ");
         int corner = faces.getFaceVertex(iF,i);
+        //3 coordinates x y z for vertex
         for (int j = 0; j < 3; ++j) {
             fprintf(fp,"%f ",vertexs[corner*3+j]);
         }
@@ -109,7 +111,6 @@ bool SaverStl::save(const char* filename, SceneGraph& wrl) const {
                         vector<float> vertexs = indexedFaceSet->getCoord();
                         for (int iF = 0; iF < faces.getNumberOfFaces(); ++iF) {
                             saveFace_(fp,normals,vertexs, faces, iF);
-
                         }
                         fclose(fp);
                         success = true;
